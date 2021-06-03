@@ -271,22 +271,23 @@ def consensus():
 @app.before_first_request
 def setup():
     # Register Raspberry Pi with complete blockchain as a node and resolve conflicts
-    blockchain.register_node('http://192.168.1.8:5000')
-    blockchain.resolve_conflicts()
-    address = "http://"+str(socket.gethostbyname(socket.gethostname()))+":5000"
+    if str(socket.gethostbyname(socket.gethostname())) != "192.168.1.8:5000":
+        blockchain.register_node('http://192.168.1.8:5000')
+        blockchain.resolve_conflicts()
+        address = "http://"+str(socket.gethostbyname(socket.gethostname()))+":5000"
 
-    node_name = {
-        "nodes": [
-            address, 
-            address
-            ]
-    }
+        node_name = {
+            "nodes": [
+                address, 
+                address
+                ]
+        }
 
-    response = requests.post('http://192.168.1.8:5000/nodes/register', json=node_name)
-    message = response.json()
-    for node in message['total_nodes']:
-        if node!= address and len(node) > 4:
-            blockchain.register_node(node)
+        response = requests.post('http://192.168.1.8:5000/nodes/register', json=node_name)
+        message = response.json()
+        for node in message['total_nodes']:
+            if node!= address and len(node) > 4:
+                blockchain.register_node(node)
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
