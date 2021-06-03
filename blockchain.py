@@ -74,8 +74,12 @@ class Blockchain(object):
         max_length = len(self.chain)
         print(neighbors)
         # Grab and verify the chains from all the nodes in the network
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 5000))
+
         for node in neighbors:
-            if len(node)>4 and str(socket.gethostbyname(socket.gethostname()))+":5000" != node:
+            if len(node)>4 and str(s.getsockname()[0])+":5000" != node:
                 response = requests.get(f'http://{node}/chain')
 
                 if response.status_code == 200:
@@ -200,8 +204,11 @@ def mine():
     previous_hash = blockchain.hash(last_block)
     block = blockchain.new_block(proof, previous_hash)
 
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 5000))
+
     for node in blockchain.nodes:
-        if str(node) != +str(socket.gethostbyname(socket.gethostname()))+":5000" and len(node)>4:
+        if str(node) != +str(s.getsockname()[0])+":5000" and len(node)>4:
             print("updating")
             requests.get("http://"+str(node)+"/nodes/resolve")
 
@@ -244,8 +251,11 @@ def register_nodes():
     if nodes is None:
         return "Error: please supply a valid list of nodes", 400
     
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 5000))
+
     for node in nodes:
-        if str(node) != "http://"+str(socket.gethostbyname(socket.gethostname()))+":5000" and len(node)>4:
+        if str(node) != "http://"+str(s.getsockname()[0])+":5000" and len(node)>4:
             blockchain.register_node(node)
 
     response = {
@@ -273,13 +283,13 @@ def consensus():
 @app.before_first_request
 def setup():
     # Register Raspberry Pi with complete blockchain as a node and resolve conflicts
-    print("started")
-    print(str(socket.gethostbyname(socket.gethostname())))
-    if str(socket.gethostbyname(socket.gethostname())) != "192.168.1.8":
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 5000))
+    if str(s.getsockname()[0]) != "192.168.1.8":
         print("not base node")
         blockchain.register_node('http://192.168.1.8:5000')
         blockchain.resolve_conflicts()
-        address = "http://"+str(socket.gethostbyname(socket.gethostname()))+":5000"
+        address = "http://"+str(s.getsockname()[0])+":5000"
 
         node_name = {
             "nodes": [
