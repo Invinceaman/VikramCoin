@@ -198,7 +198,11 @@ def mine():
     #Forge the new Block by adding it to the chain
     previous_hash = blockchain.hash(last_block)
     block = blockchain.new_block(proof, previous_hash)
-    
+
+    for node in blockchain.nodes:
+        if str(node) != "http://"+str(socket.gethostbyname(socket.gethostname()))+":5000" and len(node)>4:
+            requests.get("http://"+str(node)+"/nodes/resolve")
+
     response = {
         'message': "New Block Forged",
         'index': block['index'],
