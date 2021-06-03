@@ -75,7 +75,7 @@ class Blockchain(object):
         print(neighbors)
         # Grab and verify the chains from all the nodes in the network
         for node in neighbors:
-            if len(node)>4:
+            if len(node)>4 and str(socket.gethostbyname(socket.gethostname()))+":5000" != node:
                 response = requests.get(f'http://{node}/chain')
 
                 if response.status_code == 200:
