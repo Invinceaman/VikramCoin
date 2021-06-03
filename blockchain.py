@@ -274,6 +274,7 @@ def consensus():
 def setup():
     # Register Raspberry Pi with complete blockchain as a node and resolve conflicts
     print("started")
+    print(str(socket.gethostbyname(socket.gethostname())))
     if str(socket.gethostbyname(socket.gethostname())) != "192.168.1.8":
         print("not base node")
         blockchain.register_node('http://192.168.1.8:5000')
