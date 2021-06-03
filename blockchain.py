@@ -208,7 +208,7 @@ def mine():
     s.connect(("8.8.8.8", 5000))
 
     for node in blockchain.nodes:
-        if str(node) != +str(s.getsockname()[0])+":5000" and len(node)>4:
+        if str(node) != str(s.getsockname()[0])+":5000" and len(node)>4:
             print("updating")
             requests.get("http://"+str(node)+"/nodes/resolve")
 
