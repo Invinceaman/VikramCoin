@@ -186,6 +186,7 @@ blockchain = Blockchain()
 
 @app.route('/mine', methods=['GET'])
 def mine():
+    print("mining")
     # Run the proof of work algorithm to get the next proof...
     last_block = blockchain.last_block
     last_proof = last_block['proof']
@@ -201,6 +202,7 @@ def mine():
 
     for node in blockchain.nodes:
         if str(node) != +str(socket.gethostbyname(socket.gethostname()))+":5000" and len(node)>4:
+            print("updating")
             requests.get("http://"+str(node)+"/nodes/resolve")
 
     response = {
@@ -271,7 +273,9 @@ def consensus():
 @app.before_first_request
 def setup():
     # Register Raspberry Pi with complete blockchain as a node and resolve conflicts
+    print("started")
     if str(socket.gethostbyname(socket.gethostname())) != "192.168.1.8":
+        print("not base node")
         blockchain.register_node('http://192.168.1.8:5000')
         blockchain.resolve_conflicts()
         address = "http://"+str(socket.gethostbyname(socket.gethostname()))+":5000"
