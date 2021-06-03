@@ -5,6 +5,7 @@ from textwrap import dedent
 from uuid import uuid4
 from urllib.parse import urlparse
 import requests
+import socket
 
 from flask import Flask, jsonify, request
 
@@ -31,7 +32,6 @@ class Blockchain(object):
             self.nodes.add(parsed_url.path)
         else:
             raise ValueError('Invalid URL')
-        print("node added")
     
     def valid_chain(self, chain):
         """
@@ -72,19 +72,20 @@ class Blockchain(object):
 
         # Only look for chains longer than ours
         max_length = len(self.chain)
-
+        print(neighbors)
         # Grab and verify the chains from all the nodes in the network
         for node in neighbors:
-            response = requests.get(f'http://{node}/chain')
+            if len(node)>4:
+                response = requests.get(f'http://{node}/chain')
 
-            if response.status_code == 200:
-                length = response.json()['length']
-                chain = response.json()['chain']
+                if response.status_code == 200:
+                    length = response.json()['length']
+                    chain = response.json()['chain']
 
-                # Check if the length is longer and the chain is valid
-                if length > max_length and self.valid_chain(chain):
-                    max_length = length
-                    new_chain = chain
+                    # Check if the length is longer and the chain is valid
+                    if length > max_length and self.valid_chain(chain):
+                        max_length = length
+                        new_chain = chain
         
         # Replace our chain if we discovered a new, valid chain longer than ours
         if new_chain:
@@ -197,7 +198,7 @@ def mine():
     #Forge the new Block by adding it to the chain
     previous_hash = blockchain.hash(last_block)
     block = blockchain.new_block(proof, previous_hash)
-
+    
     response = {
         'message': "New Block Forged",
         'index': block['index'],
@@ -238,7 +239,8 @@ def register_nodes():
         return "Error: please supply a valid list of nodes", 400
     
     for node in nodes:
-        blockchain.register_node(node)
+        if str(node) != "http://"+str(socket.gethostbyname(socket.gethostname()))+":5000" and len(node)>4:
+            blockchain.register_node(node)
 
     response = {
         'message': 'New nodes have been added',
@@ -261,6 +263,26 @@ def consensus():
             'new_chain': blockchain.chain
         }
     return jsonify(response), 200
+
+@app.before_first_request
+def setup():
+    # Register Raspberry Pi with complete blockchain as a node and resolve conflicts
+    blockchain.register_node('http://192.168.1.8:5000')
+    blockchain.resolve_conflicts()
+    address = "http://"+str(socket.gethostbyname(socket.gethostname()))+":5000"
+
+    node_name = {
+        "nodes": [
+            address, 
+            address
+            ]
+    }
+
+    response = requests.post('http://192.168.1.8:5000/nodes/register', json=node_name)
+    message = response.json()
+    for node in message['total_nodes']:
+        if node!= address and len(node) > 4:
+            blockchain.register_node(node)
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
