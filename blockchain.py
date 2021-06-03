@@ -7,7 +7,6 @@ from urllib.parse import urlparse
 import requests
 
 from flask import Flask, jsonify, request
-from werkzeug.wrappers import response
 
 class Blockchain(object):
     def __init__(self):
